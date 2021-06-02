@@ -101,26 +101,6 @@ target_include_directories(qdldlobject PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 include(GNUInstallDirs)
 
-# Static library
-add_library (qdldlstatic STATIC ${qdldl_src} ${qdldl_headers})
-# Give same name to static library output
-set_target_properties(qdldlstatic PROPERTIES OUTPUT_NAME qdldl)
-
-# Declare include directories for the cmake exported target
-target_include_directories(qdldlstatic
-                           PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-                                  "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}/qdldl>")
-
-# Install Static Library
-# ----------------------------------------------
-
-install(TARGETS qdldlstatic
-        EXPORT  ${PROJECT_NAME}
-        ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        LIBRARY       DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}")
-
-
 # Install Headers
 # ----------------------------------------------
 install(FILES ${qdldl_headers} DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/qdldl")
@@ -128,20 +108,27 @@ install(FILES ${qdldl_headers} DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/qdldl")
 
 # Install Shared Library
 # ----------------------------------------------
-# Create qdldl shared library
-add_library (qdldl SHARED ${qdldl_src} ${qdldl_headers})
+# Create qdldl shared or static library, depending on BUILD_SHARED_LIBS
+add_library (qdldl ${qdldl_src} ${qdldl_headers})
+
+if(BUILD_SHARED_LIBS)
+  set_target_properties(qdldl PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
 
 # Declare include directories for the cmake exported target
 target_include_directories(qdldl
 	PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
 	"$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}/qdldl>")
 
-# Install qdldl shared library
+# Install qdldl library
 install(TARGETS qdldl
 	EXPORT  ${PROJECT_NAME}
 	LIBRARY       DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 	ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 	RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+# Add qdldlstatic alias
+add_library(qdldlstatic ALIAS qdldl)
 
 # Create demo executable (linked to static library)
 add_executable (qdldl_example ${PROJECT_SOURCE_DIR}/examples/example.c)
